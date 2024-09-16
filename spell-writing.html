@@ -3,25 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <title>Spell Creator</title>
-    <!-- Include Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative&family=Uncial+Antiqua&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=SUSE:wght@100..800&display=swap" rel="stylesheet">
     <style>
-        /* Existing CSS */
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #2a2a2a;
+            --input-bg-color: #ffffff;
+            --input-text-color: #2a2a2a;
+            --button-bg-color: #e0e0e0;
+            --button-text-color: #2a2a2a;
+            --canvas-circle-color: #ccc;
+            --error-color: red;
+            --slider-bg-color: #ffffff;
+            --color1: black;
+            --color2: red;
+            --color3: orange;
+            --color4: yellow;
+            --color5: green;
+            --color6: blue;
+            --color7: indigo;
+            --color8: violet;
+        }
+
+        body.dark-mode {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --input-bg-color: #1e1e1e;
+            --input-text-color: #e0e0e0;
+            --button-bg-color: #333333;
+            --button-text-color: #e0e0e0;
+            --canvas-circle-color: #888888;
+            --error-color: #ff6e6e;
+            --slider-bg-color: #1e1e1e;
+            --color1: white; /* Adjusted for dark mode */
+        }
+
         body {
-            font-family: 'Cinzel Decorative', cursive;
-            color: #2a2a2a;
-            background: linear-gradient(135deg, #f0e6d2 0%, #e0d3b8 50%, #d1c4a7 100%);
+            font-family: "SUSE", sans-serif;
+            color: var(--text-color);
+            background-color: var(--bg-color);
             text-align: center;
         }
+
+        #toggle-container {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
+
+        /* Toggle Switch Styles */
+        .switch {
+          position: relative;
+          display: inline-block;
+          width: 60px;
+          height: 34px;
+        }
+
+        .switch input { 
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+
+        /* The toggle-slider */
+        .switch .toggle-slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #ccc;
+          transition: .4s;
+        }
+
+        .switch .toggle-slider:before {
+          position: absolute;
+          content: "";
+          height: 26px;
+          width: 26px;
+          left: 4px;
+          bottom: 4px;
+          background-color: white;
+          transition: .4s;
+        }
+
+        .switch input:checked + .toggle-slider {
+          background-color: #2196F3;
+        }
+
+        .switch input:focus + .toggle-slider {
+          box-shadow: 0 0 1px #2196F3;
+        }
+
+        .switch input:checked + .toggle-slider:before {
+          transform: translateX(26px);
+        }
+
+        /* Rounded sliders */
+        .switch .toggle-slider.round {
+          border-radius: 34px;
+        }
+
+        .switch .toggle-slider.round:before {
+          border-radius: 50%;
+        }
+
         #canvas-container {
             margin: 20px auto;
             position: relative;
             width: 600px;
             height: 600px;
         }
-        #myCanvas {
-            border: 1px solid #ccc;
-        }
+
         .inputs {
             margin: 20px auto;
             width: 600px;
@@ -33,39 +128,62 @@
         .sequence label {
             display: inline-block;
             width: 150px;
+            color: var(--text-color);
         }
         .sequence input {
             width: 200px;
             padding: 5px;
             font-size: 16px;
+            background-color: var(--input-bg-color);
+            color: var(--input-text-color);
+            border: 1px solid #ccc;
         }
         .sequence select {
             width: 200px;
             padding: 5px;
             font-size: 16px;
             margin-left: 10px;
+            background-color: var(--input-bg-color);
+            color: var(--input-text-color);
+            border: 1px solid #ccc;
         }
         #drawButton, #downloadSVGButton {
             padding: 10px 20px;
             font-size: 16px;
             margin: 5px;
+            background-color: var(--button-bg-color);
+            color: var(--button-text-color);
+            border: none;
+            cursor: pointer;
         }
         .error {
-            color: red;
+            color: var(--error-color);
             font-weight: bold;
         }
-        .slider {
+        .curvature-slider {
             margin: 20px auto;
             width: 600px;
             text-align: left;
         }
-        .slider label {
+        .curvature-slider label {
             display: inline-block;
             width: 150px;
+            color: var(--text-color);
+        }
+        .curvature-slider input[type=range] {
+            width: 400px;
         }
     </style>
 </head>
 <body>
+
+<!-- Light/Dark Mode Toggle -->
+<div id="toggle-container">
+    <label class="switch">
+        <input type="checkbox" id="theme-toggle">
+        <span class="toggle-slider round"></span>
+    </label>
+</div>
 
 <h1>Spell Creator</h1>
 <p>Enter 8 binary strings to draw the shapes, or select presets from the dropdowns.</p>
@@ -150,7 +268,7 @@
 <p class="error" id="errorMsg"></p>
 
 <!-- Curvature Slider -->
-<div class="slider">
+<div class="curvature-slider">
     <label for="curvatureSlider">Curvature:</label>
     <input type="range" id="curvatureSlider" min="0" max="100" value="0">
 </div>
@@ -160,14 +278,11 @@
 </div>
 
 <script>
-    // JavaScript code with modifications
     const canvas = document.getElementById('myCanvas');
     const ctx = canvas.getContext('2d');
     const cx = canvas.width / 2;
     const cy = canvas.height / 2;
-    const r = 250; // Radius of the circle
-
-    const colors = ['black', 'red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'];
+    const r = 250;
 
     // Presets for each sequence
     const presets = [
@@ -208,7 +323,7 @@
                 { binary: '0001011', name: 'Multiple Objects' }
             ]
         },
-        // Sequence 4 - Shape
+        // Sequence 4 - Area
         {
             category: 'Area',
             options: [
@@ -278,8 +393,6 @@
 
     document.getElementById('drawButton').addEventListener('click', drawShapes);
     document.getElementById('downloadSVGButton').addEventListener('click', downloadSVG);
-
-    // Add event listener to the slider
     document.getElementById('curvatureSlider').addEventListener('input', drawShapes);
 
     // Function to populate the dropdowns
@@ -316,25 +429,39 @@
         // Clear the canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Create an SVG element
+        // Get the circle color from CSS variable
+        const circleColor = getComputedStyle(document.documentElement).getPropertyValue('--canvas-circle-color').trim();
+
+        // Get colors from CSS variables
+        const colors = [
+            getComputedStyle(document.documentElement).getPropertyValue('--color1').trim(),
+            getComputedStyle(document.documentElement).getPropertyValue('--color2').trim(),
+            getComputedStyle(document.documentElement).getPropertyValue('--color3').trim(),
+            getComputedStyle(document.documentElement).getPropertyValue('--color4').trim(),
+            getComputedStyle(document.documentElement).getPropertyValue('--color5').trim(),
+            getComputedStyle(document.documentElement).getPropertyValue('--color6').trim(),
+            getComputedStyle(document.documentElement).getPropertyValue('--color7').trim(),
+            getComputedStyle(document.documentElement).getPropertyValue('--color8').trim()
+        ];
+
+        // Draw the circle on the canvas
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.strokeStyle = circleColor;
+        ctx.stroke();
+
+        // Draw the circle in SVG
         const svgNS = "http://www.w3.org/2000/svg";
         const svg = document.createElementNS(svgNS, "svg");
         svg.setAttribute("width", canvas.width);
         svg.setAttribute("height", canvas.height);
         svg.setAttribute("viewBox", "0 0 " + canvas.width + " " + canvas.height);
 
-        // Draw the circle on the canvas
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-        ctx.strokeStyle = '#ccc';
-        ctx.stroke();
-
-        // Draw the circle in SVG
         const circle = document.createElementNS(svgNS, "circle");
         circle.setAttribute("cx", cx);
         circle.setAttribute("cy", cy);
         circle.setAttribute("r", r);
-        circle.setAttribute("stroke", "#ccc");
+        circle.setAttribute("stroke", circleColor);
         circle.setAttribute("fill", "none");
         svg.appendChild(circle);
 
@@ -348,7 +475,8 @@
             // Draw the points on the canvas (optional)
             ctx.beginPath();
             ctx.arc(x, y, 5, 0, 2 * Math.PI);
-            ctx.fillStyle = 'black';
+            const pointColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
+            ctx.fillStyle = pointColor;
             ctx.fill();
         }
 
@@ -449,8 +577,37 @@
         }
     }
 
+    // Theme toggle script
+    const toggleSwitch = document.getElementById('theme-toggle');
+
+    toggleSwitch.addEventListener('change', switchTheme, false);
+
+    function switchTheme(e) {
+        if (e.target.checked) {
+            document.body.classList.add('dark-mode');
+            localStorage.setItem('theme', 'dark');
+        }
+        else {
+            document.body.classList.remove('dark-mode');
+            localStorage.setItem('theme', 'light');
+        }
+        // Redraw the shapes to adjust colors
+        drawShapes();
+    }
+
+    // Check Local Storage for theme
+    const currentTheme = localStorage.getItem('theme') ? localStorage.getItem('theme') : null;
+
+    if (currentTheme) {
+        if (currentTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            toggleSwitch.checked = true;
+        }
+    }
+
     // Initial draw
     drawShapes();
+
 </script>
 
 </body>
