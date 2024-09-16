@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spell Creator</title>
+    <!-- Include Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative&family=Uncial+Antiqua&display=swap" rel="stylesheet">
+    <style>
+        /* Existing CSS */
+        body {
+            font-family: 'Cinzel Decorative', cursive;
+            color: #2a2a2a;
+            background: linear-gradient(135deg, #f0e6d2 0%, #e0d3b8 50%, #d1c4a7 100%);
+            text-align: center;
+        }
+        #canvas-container {
+            margin: 20px auto;
+            position: relative;
+            width: 600px;
+            height: 600px;
+        }
+        #myCanvas {
+            border: 1px solid #ccc;
+        }
+        .inputs {
+            margin: 20px auto;
+            width: 600px;
+            text-align: left;
+        }
+        .sequence {
+            margin-bottom: 15px;
+        }
+        .sequence label {
+            display: inline-block;
+            width: 150px;
+        }
+        .sequence input {
+            width: 200px;
+            padding: 5px;
+            font-size: 16px;
+        }
+        .sequence select {
+            width: 200px;
+            padding: 5px;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+        #drawButton, #downloadSVGButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 5px;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .slider {
+            margin: 20px auto;
+            width: 600px;
+            text-align: left;
+        }
+        .slider label {
+            display: inline-block;
+            width: 150px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Spell Creator</h1>
+<p>Enter 8 binary strings to draw the shapes, or select presets from the dropdowns.</p>
+
+<div class="inputs">
+    <!-- Sequence 1 -->
+    <div class="sequence">
+        <label for="input1">School (Black):</label>
+        <input type="text" id="input1" value="0000000">
+        <select id="dropdown1">
+            <option value="">Select Magic School</option>
+            <!-- Options will be added dynamically -->
+        </select>
+    </div>
+    <!-- Sequence 2 -->
+    <div class="sequence">
+        <label for="input2">Power (Red):</label>
+        <input type="text" id="input2" value="0000000">
+        <select id="dropdown2">
+            <option value="">Select Power Required</option>
+            <!-- Options will be added dynamically -->
+        </select>
+    </div>
+    <!-- Sequence 3 -->
+    <div class="sequence">
+        <label for="input3">Target (Orange):</label>
+        <input type="text" id="input3" value="0000000">
+        <select id="dropdown3">
+            <option value="">Select Target</option>
+            <!-- Options will be added dynamically -->
+        </select>
+    </div>
+    <!-- Sequence 4 -->
+    <div class="sequence">
+        <label for="input4">Area (Yellow):</label>
+        <input type="text" id="input4" value="0000000">
+        <select id="dropdown4">
+            <option value="">Select Area</option>
+            <!-- Options will be added dynamically -->
+        </select>
+    </div>
+    <!-- Sequence 5 -->
+    <div class="sequence">
+        <label for="input5">Magnitude (Green):</label>
+        <input type="text" id="input5" value="0000000">
+        <select id="dropdown5">
+            <option value="">Select Magnitude</option>
+            <!-- Options will be added dynamically -->
+        </select>
+    </div>
+    <!-- Sequence 6 -->
+    <div class="sequence">
+        <label for="input6">Range (Blue):</label>
+        <input type="text" id="input6" value="0000000">
+        <select id="dropdown6">
+            <option value="">Select Range</option>
+            <!-- Options will be added dynamically -->
+        </select>
+    </div>
+    <!-- Sequence 7 -->
+    <div class="sequence">
+        <label for="input7">Duration (Indigo):</label>
+        <input type="text" id="input7" value="0000000">
+        <select id="dropdown7">
+            <option value="">Select Duration</option>
+            <!-- Options will be added dynamically -->
+        </select>
+    </div>
+    <!-- Sequence 8 -->
+    <div class="sequence">
+        <label for="input8">Flavor (Violet):</label>
+        <input type="text" id="input8" value="0000000">
+        <select id="dropdown8">
+            <option value="">Select Flavor</option>
+            <!-- Options will be added dynamically -->
+        </select>
+    </div>
+</div>
+
+<button id="drawButton">Draw</button>
+<button id="downloadSVGButton">Download SVG</button>
+<p class="error" id="errorMsg"></p>
+
+<!-- Curvature Slider -->
+<div class="slider">
+    <label for="curvatureSlider">Curvature:</label>
+    <input type="range" id="curvatureSlider" min="0" max="100" value="0">
+</div>
+
+<div id="canvas-container">
+    <canvas id="myCanvas" width="600" height="600"></canvas>
+</div>
+
+<script>
+    // JavaScript code with modifications
+    const canvas = document.getElementById('myCanvas');
+    const ctx = canvas.getContext('2d');
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    const r = 250; // Radius of the circle
+
+    const colors = ['black', 'red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'];
+
+    // Presets for each sequence
+    const presets = [
+        // Sequence 1 - Magic School
+        {
+            category: 'Magic School',
+            options: [
+                { binary: '0000001', name: 'Alchemy' },
+                { binary: '0000011', name: 'Arcanology' },
+                { binary: '0000101', name: 'Cosmology' },
+                { binary: '0000111', name: 'Divinity' },
+                { binary: '0001001', name: 'Druidry' },
+                { binary: '0001011', name: 'Harmony' },
+                { binary: '0001011', name: 'Old Magic' }
+            ]
+        },
+        // Sequence 2 - Power Required
+        {
+            category: 'Power Required',
+            options: [
+                { binary: '0000001', name: '1 Power Point' },
+                { binary: '0000011', name: '2 Power Points' },
+                { binary: '0000101', name: '3 Power Points' },
+                { binary: '0000111', name: '4 Power Points' },
+                { binary: '0001001', name: '5 Power Points' },
+                { binary: '0001011', name: '6 Power Points' }
+            ]
+        },
+        // Sequence 3 - Target
+        {
+            category: 'Target',
+            options: [
+                { binary: '0000001', name: 'Self' },
+                { binary: '0000011', name: 'Creature' },
+                { binary: '0000101', name: 'Object' },
+                { binary: '0000111', name: 'Area' },
+                { binary: '0001001', name: 'Multiple Creatures' },
+                { binary: '0001011', name: 'Multiple Objects' }
+            ]
+        },
+        // Sequence 4 - Shape
+        {
+            category: 'Area',
+            options: [
+                { binary: '0000001', name: 'Point' },
+                { binary: '0000011', name: 'Line' },
+                { binary: '0000101', name: 'Wall' },
+                { binary: '0000111', name: 'Cone' },
+                { binary: '0001001', name: 'Cube' },
+                { binary: '0001011', name: 'Sphere' }
+            ]
+        },
+        // Sequence 5 - Magnitude
+        {
+            category: 'Magnitude',
+            options: [
+                { binary: '0000001', name: '0 Feet / 1 Creature or Object' },
+                { binary: '0000011', name: '5 Feet / 2 Creatures or Objects' },
+                { binary: '0000101', name: '10 Feet / 3 Creatures or Objects' },
+                { binary: '0000111', name: '15 Feet / 4 Creatures or Objects' },
+                { binary: '0001001', name: '20 Feet / 5 Creatures or Objects' },
+                { binary: '0001011', name: '25 Feet / 6 Creatures or Objects' }
+            ]
+        },
+        // Sequence 6 - Range
+        {
+            category: 'Range',
+            options: [
+                { binary: '0000001', name: 'Self' },
+                { binary: '0000011', name: 'Touch' },
+                { binary: '0000101', name: '10 Feet' },
+                { binary: '0000111', name: '20 Feet' },
+                { binary: '0001001', name: '30 Feet' },
+                { binary: '0001011', name: '40 Feet' },
+                { binary: '0001111', name: '50 Feet' },
+                { binary: '0010001', name: '60 Feet' }
+            ]
+        },
+        // Sequence 7 - Duration
+        {
+            category: 'Duration',
+            options: [
+                { binary: '0000001', name: 'Instant' },
+                { binary: '0000011', name: '1 Round' },
+                { binary: '0000101', name: '1 Minute' },
+                { binary: '0000111', name: '10 Minutes' },
+                { binary: '0001001', name: '1 Hour' },
+                { binary: '0001011', name: '8 Hours' },
+                { binary: '0001111', name: '1 Day' },
+                { binary: '0010001', name: '1 Week' },
+                { binary: '0010011', name: '1 Month' },
+                { binary: '0010101', name: 'Concentration' }
+            ]
+        },
+        // Sequence 8 - Flavor
+        {
+            category: 'Flavor',
+            options: [
+                { binary: '0000001', name: 'Physical' },
+                { binary: '0000011', name: 'Nature' },
+                { binary: '0000101', name: 'Divine' },
+                { binary: '0000111', name: 'Elemental' },
+                { binary: '0001001', name: 'Sonic' },
+                { binary: '0001011', name: 'Psychic' }
+            ]
+        }
+    ];
+
+    document.getElementById('drawButton').addEventListener('click', drawShapes);
+    document.getElementById('downloadSVGButton').addEventListener('click', downloadSVG);
+
+    // Add event listener to the slider
+    document.getElementById('curvatureSlider').addEventListener('input', drawShapes);
+
+    // Function to populate the dropdowns
+    function populateDropdowns() {
+        for (let n = 1; n <= 8; n++) {
+            const dropdown = document.getElementById('dropdown' + n);
+            const sequencePresets = presets[n - 1];
+            // Update the first option to show the category name
+            dropdown.options[0].textContent = 'Select ' + sequencePresets.category;
+            sequencePresets.options.forEach(preset => {
+                const option = document.createElement('option');
+                option.value = preset.binary;
+                option.textContent = preset.name;
+                dropdown.appendChild(option);
+            });
+
+            // Add event listener to update input when preset is selected
+            dropdown.addEventListener('change', function() {
+                const input = document.getElementById('input' + n);
+                input.value = this.value;
+            });
+        }
+    }
+
+    populateDropdowns();
+
+    function drawShapes() {
+        const errorMsg = document.getElementById('errorMsg');
+        errorMsg.textContent = '';
+
+        // Get the curvature value from the slider
+        const curvature = parseFloat(document.getElementById('curvatureSlider').value);
+
+        // Clear the canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Create an SVG element
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(svgNS, "svg");
+        svg.setAttribute("width", canvas.width);
+        svg.setAttribute("height", canvas.height);
+        svg.setAttribute("viewBox", "0 0 " + canvas.width + " " + canvas.height);
+
+        // Draw the circle on the canvas
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.strokeStyle = '#ccc';
+        ctx.stroke();
+
+        // Draw the circle in SVG
+        const circle = document.createElementNS(svgNS, "circle");
+        circle.setAttribute("cx", cx);
+        circle.setAttribute("cy", cy);
+        circle.setAttribute("r", r);
+        circle.setAttribute("stroke", "#ccc");
+        circle.setAttribute("fill", "none");
+        svg.appendChild(circle);
+
+        // Calculate the positions on the circle
+        const positions = [];
+        for (let p = 0; p < 12; p++) {
+            const angle = (p / 12) * 2 * Math.PI - Math.PI / 2;
+            const x = cx + r * Math.cos(angle);
+            const y = cy + r * Math.sin(angle);
+            positions.push({ x, y });
+            // Draw the points on the canvas (optional)
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = 'black';
+            ctx.fill();
+        }
+
+        // Process each sequence
+        for (let n = 1; n <= 8; n++) {
+            const input = document.getElementById('input' + n).value.trim();
+            if (!/^[01]*$/.test(input)) {
+                errorMsg.textContent = 'Please enter valid binary strings containing only 0 and 1.';
+                return;
+            }
+            const binaryString = input;
+
+            for (let b = 0; b < binaryString.length; b++) {
+                const bit = binaryString[binaryString.length - 1 - b]; // Read from right to left
+                const startPosIndex = (6 + b) % 12;
+                if (bit === '1') {
+                    const endPosIndex = (startPosIndex - n + 12) % 12;
+                    const startPos = positions[startPosIndex];
+                    const endPos = positions[endPosIndex];
+
+                    // Compute the control point
+                    const dx = endPos.x - startPos.x;
+                    const dy = endPos.y - startPos.y;
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    let controlX, controlY;
+
+                    if (length === 0 || curvature === 0) {
+                        // If length is zero or curvature is zero, draw a straight line
+                        controlX = (startPos.x + endPos.x) / 2;
+                        controlY = (startPos.y + endPos.y) / 2;
+                    } else {
+                        const px = -dy / length;
+                        const py = dx / length;
+                        const mx = (startPos.x + endPos.x) / 2;
+                        const my = (startPos.y + endPos.y) / 2;
+                        const curvatureScale = curvature / 100; // 0 to 1
+                        const curvatureAmount = length * 0.5 * curvatureScale; // Adjust 0.5 as needed
+                        controlX = mx + px * curvatureAmount;
+                        controlY = my + py * curvatureAmount;
+                    }
+
+                    // Draw the curve on the canvas
+                    ctx.beginPath();
+                    ctx.moveTo(startPos.x, startPos.y);
+                    if (curvature === 0) {
+                        ctx.lineTo(endPos.x, endPos.y);
+                    } else {
+                        ctx.quadraticCurveTo(controlX, controlY, endPos.x, endPos.y);
+                    }
+                    ctx.strokeStyle = colors[n - 1];
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    // Draw the curve in SVG
+                    const path = document.createElementNS(svgNS, "path");
+                    let d;
+                    if (curvature === 0) {
+                        d = `M ${startPos.x} ${startPos.y} L ${endPos.x} ${endPos.y}`;
+                    } else {
+                        d = `M ${startPos.x} ${startPos.y} Q ${controlX} ${controlY} ${endPos.x} ${endPos.y}`;
+                    }
+                    path.setAttribute("d", d);
+                    path.setAttribute("stroke", colors[n - 1]);
+                    path.setAttribute("stroke-width", 2);
+                    path.setAttribute("fill", "none");
+                    svg.appendChild(path);
+                }
+            }
+        }
+
+        // Store the SVG element for downloading
+        window.generatedSVG = svg;
+    }
+
+    function downloadSVG() {
+        if (window.generatedSVG) {
+            const serializer = new XMLSerializer();
+            let svgString = serializer.serializeToString(window.generatedSVG);
+
+            // Add XML declaration if missing
+            if (!svgString.match(/^<\?xml/)) {
+                svgString = '<?xml version="1.0" encoding="UTF-8"?>\n' + svgString;
+            }
+
+            const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'spell.svg';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            URL.revokeObjectURL(url);
+        } else {
+            alert('Please draw the spell first.');
+        }
+    }
+
+    // Initial draw
+    drawShapes();
+</script>
+
+</body>
+</html>
